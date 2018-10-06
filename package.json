@@ -1,0 +1,32 @@
+{
+    "name": "xtree-store",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "start": "transform-es src -d lib -c -w",
+        "test": "node test/test"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/bplok20010/xtree-store.git"
+    },
+    "keywords": [],
+    "author": "nobo.zhou@foxmail.com",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/bplok20010/xtree-store/issues"
+    },
+    "homepage": "https://github.com/bplok20010/xtree-store#readme",
+    "devDependencies": {
+        "@babel/plugin-transform-modules-amd": "^7.1.0",
+        "@babel/plugin-transform-modules-commonjs": "^7.1.0",
+        "@babel/plugin-transform-modules-systemjs": "^7.0.0",
+        "@babel/plugin-transform-modules-umd": "^7.1.0",
+        "transform-es": "^2.2.3"
+    },
+    "dependencies": {
+        "@babel/runtime": "^7.1.2",
+        "@babel/runtime-corejs2": "^7.1.2"
+    }
+}
