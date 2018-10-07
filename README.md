@@ -13,17 +13,17 @@
 ```
 {
      rootId: null,
-     simpleMode: false,
+     simpleData: false,
      idField: 'id',
-     pidField: 'pid', //simpleMode=true时有效
-     childrenField: 'children', //simpleMode=false时有效
+     pidField: 'pid', //simpleData=true时有效
+     childrenField: 'children', //simpleData=false时有效
      processNode: node => node,
 }
 ```
 
 支持2种数据结构类型：
 
-`simpleMode: false`
+`simpleData: false`
     
     {
         id:1,
@@ -33,7 +33,7 @@
         ]
     }
 
-`simpleMode: true`
+`simpleData: true`
 
     [
         {id:1, pid: null},
@@ -51,7 +51,7 @@
 
 `isLeaf(id)` 是否叶子节点
 
-`isSimpleMode()` 是否为简单数据模式
+`isSimpleData()` 是否为简单数据模式
 
 `getNodeList()` 获取所有节点
 
@@ -103,13 +103,13 @@
 
 ### 模型管理API
 
-`appendChild(data, pid, simpleMode)` 给指定pid节点添加子节点
+`appendChild(data, pid, simpleData)` 给指定pid节点添加子节点
 
-`prependChild(data, pid, simpleMode)`
+`prependChild(data, pid, simpleData)`
 
-`insertBefore(data, id, simpleMode)`
+`insertBefore(data, id, simpleData)`
 
-`insertAfter(data, id, simpleMode)`
+`insertAfter(data, id, simpleData)`
 
 `removeNode(id)`
 

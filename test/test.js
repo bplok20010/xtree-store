@@ -15,7 +15,7 @@ const store1 = createStore(data, {
 });
 
 const store2 = cloneStore(createStore(simpleData, {
-    simpleMode: true,
+    simpleData: true,
 }));
 
 console.log(JSON.stringify(store2.toPaths('label')));

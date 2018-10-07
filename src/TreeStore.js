@@ -15,7 +15,7 @@ export default class TreeStore {
     constructor(data, options) {
         this.options = Object.assign({
             rootId: null,
-            simpleMode: false,
+            simpleData: false,
             idField: 'id',
             pidField: 'pid',
             childrenField: 'children',
@@ -36,8 +36,8 @@ export default class TreeStore {
         this.setData(data);
     }
 
-    isSimpleMode() {
-        return this.options.simpleMode;
+    isSimpleData() {
+        return this.options.simpleData;
     }
 
     getNodeList() {
@@ -67,7 +67,7 @@ export default class TreeStore {
 
         if (!data.length) return [];
 
-        if (this.isSimpleMode()) {
+        if (this.isSimpleData()) {
             return this._parseSimpleData(data, pid, insert);
         } else {
             return this._parseData(data, pid, insert);
@@ -323,64 +323,64 @@ export default class TreeStore {
     }
 
     _saveMode() {
-        this.__saveMode = this.options.simpleMode;
+        this.__saveMode = this.options.simpleData;
     }
 
     _restoreMode() {
         if (!isUndefined(this.__saveMode)) {
-            this.options.simpleMode = this.__saveMode;
+            this.options.simpleData = this.__saveMode;
             this.__saveMode = undefined;
         }
     }
 
-    appendChild(data, pid, simpleMode = this.options.simpleMode) {
+    appendChild(data, pid, simpleData = this.options.simpleData) {
         this._saveMode();
-        this.options.simpleMode = simpleMode;
+        this.options.simpleData = simpleData;
 
         this.setData(data, pid);
 
         this._restoreMode();
     }
 
-    prependChild(node, pid, simpleMode = this.options.simpleMode) {
+    prependChild(node, pid, simpleData = this.options.simpleData) {
         const pIndex = this.getNodeIndex(pid);
         if (pIndex < 0) return;
 
         this._saveMode();
-        this.options.simpleMode = simpleMode;
+        this.options.simpleData = simpleData;
 
         const NodeList = this.getNodeList();
         const results = this.setData(node, pid, false);
 
         if (results.length) {
             NodeList.splice(pIndex, 1, ...[NodeList[pIndex]].concat(results));
-            if (this.isSimpleMode())
+            if (this.isSimpleData())
                 this._updateDepth(pid);
         }
 
         this._restoreMode();
     }
 
-    insertBefore(node, id, simpleMode = this.options.simpleMode) {
+    insertBefore(node, id, simpleData = this.options.simpleData) {
         const index = this.getNodeIndex(id);
         if (index < 0) return;
 
         this._saveMode();
-        this.options.simpleMode = simpleMode;
+        this.options.simpleData = simpleData;
 
         const NodeList = this.getNodeList();
         const results = this.setData(node, id, false);
         if (results.length) {
             NodeList.splice(pIndex, 0, ...results);
-            if (this.isSimpleMode())
+            if (this.isSimpleData())
                 this._updateDepth(results[0].pid);
         }
 
         this._restoreMode();
     }
 
-    insertAfter(node, id, simpleMode) {
-        return this.prependChild(node, id, simpleMode);
+    insertAfter(node, id, simpleData) {
+        return this.prependChild(node, id, simpleData);
     }
 
     removeNode(id) {
