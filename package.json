@@ -11,9 +11,20 @@
         "type": "git",
         "url": "git+https://github.com/bplok20010/xtree-store.git"
     },
-    "keywords": [],
+    "keywords": [
+        "data",
+        "model",
+        "store",
+        "tree",
+        "tree-store"
+    ],
     "author": "nobo.zhou@foxmail.com",
     "license": "MIT",
+    "files": [
+        "lib",
+        "*.js",
+        "*.md"
+    ],
     "bugs": {
         "url": "https://github.com/bplok20010/xtree-store/issues"
     },
