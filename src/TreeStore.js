@@ -232,7 +232,7 @@ export default class TreeStore {
 
     isFirstChild(id) {
         if (this.isRoot(id)) return true;
-        const node = this.getNode();
+        const node = this.getNode(id);
         if (!node) return false;
 
         return node === this.getFirstChild(node.pid);
@@ -240,7 +240,7 @@ export default class TreeStore {
 
     isLastChild(id) {
         if (this.isRoot(id)) return true;
-        const node = this.getNode();
+        const node = this.getNode(id);
         if (!node) return false;
 
         return node === this.getLastChild(node.pid);
