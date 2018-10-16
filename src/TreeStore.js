@@ -89,7 +89,7 @@ export default class TreeStore {
     }
 
     _parseData(data, pid, insert = true) {
-        const { idField, childrenField, processNode } = this.options;
+        const { idField, childrenField, processNode, cache: useCache } = this.options;
         const NodeList = this.__NodeList;
         const NodeMap = this.__NodeMap;
         const isInit = this.__init;
@@ -137,7 +137,7 @@ export default class TreeStore {
 
         data.forEach(node => walkNodes(node, pNode.id, pNode.depth + 1));
 
-        if (!isInit) {
+        if (!isInit && useCache) {
             pIds.forEach(pid => this._cache.delete(this._getChildrenCacheKey(pid)));
         }
 
@@ -145,10 +145,11 @@ export default class TreeStore {
     }
 
     _parseSimpleData(data, pid, insert = true) {
-        const { idField, pidField, processNode } = this.options;
+        const { idField, pidField, processNode, cache: useCache } = this.options;
         const NodeList = this.__NodeList;
         const NodeMap = this.__NodeMap;
         const pNode = this.getNode(pid);
+        const isInit = this.__init;
         const results = [];
 
         if (!pNode) return results;
@@ -163,7 +164,7 @@ export default class TreeStore {
 
             node = normalize(node, {
                 id,
-                pid,
+                pid
             });
 
             if (!this.hasNode(id)) {
@@ -172,6 +173,10 @@ export default class TreeStore {
                 NodeMap[id] = node;
             }
         });
+
+        if (!isInit && useCache) {
+            this._clearCacheByPID(pNode.id);
+        }
 
         //update depth
         insert && this._updateDepth(pNode.id);
@@ -183,7 +188,7 @@ export default class TreeStore {
         id = undef(id, this.getRootId());
         const node = this.getNode(id);
         const pDepth = node ? node.depth : 0;
-        const isInit = this.__init;
+        const childNodes = this.getChildren(id);
 
         if (node) {
             if (isUndefined(node.leaf)) {
@@ -191,19 +196,18 @@ export default class TreeStore {
             }
         }
 
-        if (!isInit && !node.leaf) {
-            this._cache.delete(this._getChildrenCacheKey(id));
-        }
-
-        if (!isInit) {
-            console.log(node, '======')
-        }
-
-        const childNodes = this.getChildren(id);
-
         childNodes.forEach(node => {
             node.depth = pDepth + 1;
             this._updateDepth(node.id);
+        });
+    }
+
+    _clearCacheByPID(pid) {
+        const childs = this.getAllChildren(pid);
+        this._cache.delete(this._getChildrenCacheKey(pid));
+
+        childs.forEach(node => {
+            this._cache.delete(this._getChildrenCacheKey(node.id));
         });
     }
 

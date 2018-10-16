@@ -6,7 +6,7 @@ export default function normalize(data, defaults) {
         {
             id: null,
             pid: null,
-            leaf: false,
+            leaf: undefined,
             depth: 1,
         },
         data,
