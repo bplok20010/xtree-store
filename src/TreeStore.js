@@ -1,5 +1,6 @@
 import normalize from './normalize';
 import cloneStore from './cloneStore';
+import Cache from './Cache';
 import {
     isEqual,
     isUndefined,
@@ -11,6 +12,8 @@ export default class TreeStore {
     __NodeList = [];
     __NodeMap = {};
     __root = {};
+    __init = true;
+    _cache = new Cache();
 
     constructor(data, options) {
         this.options = Object.assign({
@@ -20,6 +23,7 @@ export default class TreeStore {
             pidField: 'pid',
             childrenField: 'children',
             processNode: null,
+            cache: true,
         }, options);
 
         this.__root = normalize({
@@ -34,6 +38,16 @@ export default class TreeStore {
         this.__NodeMap = {};
 
         this.setData(data);
+
+        this.__init = false;
+    }
+
+    _getChildrenCacheKey(id) {
+        return id + '_children';
+    }
+
+    clearCache() {
+        this._cache.clear();
     }
 
     isSimpleData() {
@@ -78,9 +92,10 @@ export default class TreeStore {
         const { idField, childrenField, processNode } = this.options;
         const NodeList = this.__NodeList;
         const NodeMap = this.__NodeMap;
+        const isInit = this.__init;
         const pNode = this.getNode(pid);
         const results = [];
-
+        const pIds = [pid];
         if (!pNode) return results;
 
         const walkNodes = (node, pid, depth = 1) => {
@@ -91,11 +106,16 @@ export default class TreeStore {
             const id = node[idField];
             const children = node[childrenField];
 
+            let leaf = node.leaf;
+            if (isUndefined(leaf)) {
+                leaf = isUndefined(children);
+            }
+
             node = normalize(node, {
                 id,
                 pid,
                 depth,
-                leaf: !Array.isArray(children)
+                leaf
             });
 
             delete node[childrenField];
@@ -106,12 +126,20 @@ export default class TreeStore {
                 NodeMap[id] = node;
             }
 
-            if (Array.isArray(children)) {
+            if (!leaf && Array.isArray(children)) {
                 children.forEach(node => walkNodes(node, id, depth + 1));
+            }
+
+            if (!leaf) {
+                pIds.push(id);
             }
         }
 
         data.forEach(node => walkNodes(node, pNode.id, pNode.depth + 1));
+
+        if (!isInit) {
+            pIds.forEach(pid => this._cache.delete(this._getChildrenCacheKey(pid)));
+        }
 
         return results;
     }
@@ -155,13 +183,23 @@ export default class TreeStore {
         id = undef(id, this.getRootId());
         const node = this.getNode(id);
         const pDepth = node ? node.depth : 0;
-        const childNodes = this.getChildren(id);
+        const isInit = this.__init;
 
         if (node) {
             if (isUndefined(node.leaf)) {
                 node.leaf = !childNodes.length;
             }
         }
+
+        if (!isInit && !node.leaf) {
+            this._cache.delete(this._getChildrenCacheKey(id));
+        }
+
+        if (!isInit) {
+            console.log(node, '======')
+        }
+
+        const childNodes = this.getChildren(id);
 
         childNodes.forEach(node => {
             node.depth = pDepth + 1;
@@ -258,10 +296,23 @@ export default class TreeStore {
     }
 
     getChildren(id) {
+        const key = this._getChildrenCacheKey(id);
+        const useCache = this.options.cache;
+
+        if (useCache && this._cache.has(key)) {
+            return this._cache.get(key);
+        }
+
         id = undef(id, this.getRootId());
-        return this.isLeaf(id) ?
+        const results = this.isLeaf(id) ?
             [] :
             this.__NodeList.filter(node => isEqual(node.pid, id));
+
+        if (useCache) {
+            this._cache.set(key, results);
+        }
+
+        return results;
     }
 
     getChildrenIds(id) {
@@ -385,11 +436,21 @@ export default class TreeStore {
 
     removeNode(id) {
         const index = this.getNodeIndex(id);
+        const childs = this.getAllChildren(id);
         const NodeList = this.getNodeList();
         const NodeMap = this.getNodeMap();
         if (index >= 0) {
             NodeList.splice(index, 1);
             delete NodeMap[id];
+
+            childs.forEach(node => {
+                const idx = this.getNodeIndex(node.id);
+                if (idx >= 0) {
+                    NodeList.splice(index, 1);
+                    delete NodeMap[id];
+                }
+            });
+
         }
     }
 
