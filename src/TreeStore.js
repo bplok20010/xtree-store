@@ -23,6 +23,7 @@ export default class TreeStore {
             pidField: 'pid',
             childrenField: 'children',
             processNode: null,
+            resolveChildren: null,
             cache: true,
         }, options);
 
@@ -301,16 +302,20 @@ export default class TreeStore {
 
     getChildren(id) {
         const key = this._getChildrenCacheKey(id);
-        const useCache = this.options.cache;
+        const { useCache, resolveChildren } = this.options;
 
         if (useCache && this._cache.has(key)) {
             return this._cache.get(key);
         }
 
         id = undef(id, this.getRootId());
-        const results = this.isLeaf(id) ?
+        let results = this.isLeaf(id) ?
             [] :
             this.__NodeList.filter(node => isEqual(node.pid, id));
+
+        if (resolveChildren) {
+            results = resolveChildren(results);
+        }
 
         if (useCache) {
             this._cache.set(key, results);
@@ -389,6 +394,11 @@ export default class TreeStore {
     }
 
     appendChild(data, pid, simpleData = this.options.simpleData) {
+        const pNode = this.getNode(pid);
+        if (!pNode) return;
+
+        pNode.leaf = false;
+
         this._saveMode();
         this.options.simpleData = simpleData;
 
@@ -398,6 +408,11 @@ export default class TreeStore {
     }
 
     prependChild(node, pid, simpleData = this.options.simpleData) {
+        const pNode = this.getNode(pid);
+        if (!pNode) return;
+
+        pNode.leaf = false;
+
         const pIndex = this.getNodeIndex(pid);
         if (pIndex < 0) return;
 
@@ -420,22 +435,40 @@ export default class TreeStore {
         const index = this.getNodeIndex(id);
         if (index < 0) return;
 
+        const pNode = this.getParentNode(id);
+
         this._saveMode();
         this.options.simpleData = simpleData;
 
         const NodeList = this.getNodeList();
-        const results = this.setData(node, id, false);
+        const results = this.setData(node, pNode.id, false);
         if (results.length) {
-            NodeList.splice(pIndex, 0, ...results);
+            NodeList.splice(index, 0, ...results);
             if (this.isSimpleData())
-                this._updateDepth(results[0].pid);
+                this._updateDepth(pNode.id);
         }
 
         this._restoreMode();
     }
 
     insertAfter(node, id, simpleData) {
-        return this.prependChild(node, id, simpleData);
+        const index = this.getNodeIndex(id);
+        if (index < 0) return;
+
+        const pNode = this.getParentNode(id);
+
+        this._saveMode();
+        this.options.simpleData = simpleData;
+
+        const NodeList = this.getNodeList();
+        const results = this.setData(node, pNode.id, false);
+        if (results.length) {
+            NodeList.splice(index, 1, ...[NodeList[index]].concat(results));
+            if (this.isSimpleData())
+                this._updateDepth(pNode.id);
+        }
+
+        this._restoreMode();
     }
 
     removeNode(id) {
@@ -456,6 +489,15 @@ export default class TreeStore {
             });
 
         }
+    }
+
+    replaceNode(node, id, simpleData) {
+        const index = this.getNodeIndex(id);
+        if (index < 0) return;
+
+        const pNode = this.getParentNode(id);
+
+
     }
 
     toData(childField = 'children') {

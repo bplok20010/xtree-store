@@ -18,6 +18,8 @@
      pidField: 'pid', //simpleData=true时有效
      childrenField: 'children', //simpleData=false时有效
      processNode: node => node,
+     resolveChildren: results => results, //getChildren时结果处理函数
+     cache: true, // getChildren启用缓存
 }
 ```
 
@@ -112,6 +114,10 @@
 `insertAfter(data, id, simpleData)`
 
 `removeNode(id)`
+
+### 其他
+
+`clearCache` 清空缓存
 
 ### 模型数据转换API
 

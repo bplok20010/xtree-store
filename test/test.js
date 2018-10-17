@@ -24,6 +24,8 @@ store1.appendChild({ value: 9999 }, 3);
 console.log(store1.getChildren(3))
 
 store2.prependChild({ id: 9999 }, 3);
+store2.insertBefore({ id: 9998 }, 9999);
+store2.insertAfter({ id: 10000 }, 9999);
 console.log(store2.getChildren(3))
 
 console.log(store2.getPath(39))
