@@ -505,6 +505,8 @@ export default class TreeStore {
         const oldNode = this.getNode(id);
         if (!oldNode) return;
 
+        if (this.isRoot(id)) return;
+
         const pNode = this.getParentNode(id);
         const siblings = this.getChildren(pNode.id);
         const index = siblings.indexOf(oldNode);
@@ -518,6 +520,12 @@ export default class TreeStore {
             this.prependChild(node, pNode.id, simpleData);
         }
 
+    }
+
+    removeAllNode() {
+        this.__NodeList = [];
+        this.__NodeMap = {};
+        this.clearCache();
     }
 
     toData(childField = 'children') {
