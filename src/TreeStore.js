@@ -476,9 +476,16 @@ export default class TreeStore {
         const childs = this.getAllChildren(id);
         const NodeList = this.getNodeList();
         const NodeMap = this.getNodeMap();
+        const removeNode = NodeList[index];
+
+
         if (index >= 0) {
             NodeList.splice(index, 1);
             delete NodeMap[id];
+
+            //if (!this.isLeaf(removeNode.id)) {
+            this._cache.delete(this._getChildrenCacheKey(removeNode.id));
+            //}
 
             childs.forEach(node => {
                 const idx = this.getNodeIndex(node.id);
@@ -486,17 +493,30 @@ export default class TreeStore {
                     NodeList.splice(index, 1);
                     delete NodeMap[id];
                 }
-            });
 
+                //if (!this.isLeaf(node.id)) {
+                this._cache.delete(this._getChildrenCacheKey(node.id));
+                //}
+            });
         }
     }
 
     replaceNode(node, id, simpleData) {
-        const index = this.getNodeIndex(id);
-        if (index < 0) return;
+        const oldNode = this.getNode(id);
+        if (!oldNode) return;
 
         const pNode = this.getParentNode(id);
+        const siblings = this.getChildren(pNode.id);
+        const index = siblings.indexOf(oldNode);
+        const prevNode = index === -1 ? null : siblings[index - 1];
 
+        this.removeNode(oldNode.id);
+
+        if (prevNode) {
+            this.insertAfter(node, prevNode.id, simpleData);
+        } else {
+            this.prependChild(node, pNode.id, simpleData);
+        }
 
     }
 

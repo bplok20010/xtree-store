@@ -115,9 +115,8 @@
 
 `removeNode(id)`
 
-### 其他
+`replaceNode(node/*新*/, id/*旧*/, simpleData)` 替换节点
 
-`clearCache` 清空缓存
 
 ### 模型数据转换API
 
@@ -132,6 +131,8 @@
 ### 其他
 
 `clone()` 返回一个新的数据模型实例 
+
+`clearCache` 清空缓存
 
 ## createStore(data, options)
 
