@@ -115,6 +115,8 @@
 
 `removeNode(id)`
 
+`removeAllNode()`
+
 `replaceNode(node/*新*/, id/*旧*/, simpleData)` 替换节点
 
 

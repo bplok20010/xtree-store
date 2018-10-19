@@ -38,7 +38,9 @@ export default class TreeStore {
         this.__NodeList = [];
         this.__NodeMap = {};
 
-        this.setData(data);
+        if (data) {
+            this.setData(data);
+        }
 
         this.__init = false;
     }
