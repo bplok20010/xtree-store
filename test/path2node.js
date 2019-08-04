@@ -1,4 +1,4 @@
-const { path2node } = require('../index');
-const paths = require('./paths.json');
+const { path2node } = require("../lib");
+const paths = require("./paths.json");
 
-console.log(path2node(paths))
+console.log(path2node(paths));

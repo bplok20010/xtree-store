@@ -1,15 +1,14 @@
-
 /**
- * 
- * @param {array|string} paths [paths=[]] 
+ *
+ * @param {array|string} paths [paths=[]]
  * @param {string} sep [sep='/']
  * @param {string|number} rootId [rootId=null]
  * @return {array}
- * 
+ *
  * @example
  * path2node(["A/B/C", "A/B/D",, "A/E/C"]);
  */
-export default function path2node(paths = [], sep = '/', rootId = null) {
+export default function path2node(paths = [], sep = "/", rootId = null) {
     const nodes = [];
     const map = Object.create(null);
 
@@ -17,7 +16,7 @@ export default function path2node(paths = [], sep = '/', rootId = null) {
 
     paths.forEach(path => {
         if (path == null) return;
-        path += '';
+        path += "";
 
         const pathArray = path.split(sep);
 

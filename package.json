@@ -2,9 +2,9 @@
     "name": "xtree-store",
     "version": "1.1.0",
     "description": "",
-    "main": "index.js",
+    "main": "lib/index.js",
     "scripts": {
-        "start": "transform-es src -d lib -c -w",
+        "start": "transform-es src -d lib -c -w --corejs false",
         "test": "node test/test"
     },
     "repository": {
@@ -16,7 +16,8 @@
         "model",
         "store",
         "tree",
-        "tree-store"
+        "tree-store",
+        "xtree-store"
     ],
     "author": "nobo.zhou@foxmail.com",
     "license": "MIT",
@@ -34,7 +35,7 @@
         "@babel/plugin-transform-modules-commonjs": "^7.1.0",
         "@babel/plugin-transform-modules-systemjs": "^7.0.0",
         "@babel/plugin-transform-modules-umd": "^7.1.0",
-        "transform-es": "^2.2.3"
+        "transform-es": "^2.3.0"
     },
     "dependencies": {
         "@babel/runtime": "^7.1.2",

@@ -1,6 +1,5 @@
-
 export default class Cache {
-    _caches = Object.create(null)
+    _caches = Object.create(null);
 
     set(key, value) {
         this._caches[key] = value;

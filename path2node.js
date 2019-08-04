@@ -1,1 +1,1 @@
-module.exports = require('./lib/path2node').default;
+module.exports = require("./lib/path2node").default;
