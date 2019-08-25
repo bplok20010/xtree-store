@@ -8,7 +8,18 @@
 
 `import TreeStore, { createStore, cloneStore, path2node } from 'xtree-store'`
 
-## options 
+## Node
+
+```
+type Node = {
+    id: String | Number,
+    pid: String | Number,
+    leaf: Boolean,
+    depth: Number,
+}
+```
+
+## options
 
 ```
 {
@@ -23,17 +34,17 @@
 }
 ```
 
-支持2种数据结构类型：
+支持 2 种数据结构类型：
 
 `simpleData: false`
-    
-    {
-        id:1,
-        children: [
-            {id:2},
-            {id:3}
-        ]
-    }
+
+{
+id:1,
+children: [
+{id:2},
+{id:3}
+]
+}
 
 `simpleData: true`
 
@@ -45,7 +56,7 @@
 
 ## TreeStore API
 
-### 常用API 
+### 常用 API
 
 `constructor(data[, options])` 构造函数
 
@@ -57,9 +68,9 @@
 
 `getNodeList()` 获取所有节点
 
-`getNodeMap()` 获取节点Map<key,node>对象
+`getNodeMap()` 获取节点 Map<key,node>对象
 
-`getRootId()` 获取根节点ID
+`getRootId()` 获取根节点 ID
 
 `hasNode(id)` 当前节点是否存在
 
@@ -75,7 +86,7 @@
 
 `getDepthNodes(depth)` 获取指定深度的节点列表
 
-`getDepthIds(depth)` 获取指定深度的节点ID列表
+`getDepthIds(depth)` 获取指定深度的节点 ID 列表
 
 `getMaxDepth()` 获取当前数据模型的最大深度值
 
@@ -99,13 +110,13 @@
 
 `getParentNodes(id)` 获取所有父节点
 
-`getParentIds(id)` 获取所有父节点ID
+`getParentIds(id)` 获取所有父节点 ID
 
 `getPath(id, field = 'id', sep = '/')` 获取节点路径
 
-### 模型管理API
+### 模型管理 API
 
-`appendChild(data, pid, simpleData)` 给指定pid节点添加子节点
+`appendChild(data, pid, simpleData)` 给指定 pid 节点添加子节点
 
 `prependChild(data, pid, simpleData)`
 
@@ -119,30 +130,29 @@
 
 `replaceNode(node/*新*/, id/*旧*/, simpleData)` 替换节点
 
-
-### 模型数据转换API
+### 模型数据转换 API
 
 `toData()` 返回`simpleData=false`的数据结构
 
 `toSimpleData()` 返回`simpleData=true`的数据结构
 
-`toPaths()` 返回所有叶子节点的path
+`toPaths()` 返回所有叶子节点的 path
 
-`toAllPaths()` 返回所有节点的path
+`toAllPaths()` 返回所有节点的 path
 
 ### 其他
 
-`clone()` 返回一个新的数据模型实例 
+`clone()` 返回一个新的数据模型实例
 
 `clearCache` 清空缓存
 
 ## createStore(data, options)
 
-作用同` new TreeStore(...) `
+作用同`new TreeStore(...)`
 
 ## cloneStore(store)
 
-复制数据模型并返回新实例 
+复制数据模型并返回新实例
 
 ## path2node(paths = [], sep = '/', rootId = null)
 
