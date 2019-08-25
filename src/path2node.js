@@ -6,7 +6,7 @@
  * @return {array}
  *
  * @example
- * path2node(["A/B/C", "A/B/D",, "A/E/C"]);
+ * path2node(["A/B/C", "A/B/D", "A/E/C"]);
  */
 export default function path2node(paths = [], sep = "/", rootId = null) {
     const nodes = [];
