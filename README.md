@@ -6,31 +6,49 @@
 
 `npm install --save xtree-store`
 
-`import TreeStore, { createStore, cloneStore, path2node } from 'xtree-store'`
+`import { createStore, path2data, TreeStore } from 'xtree-store'`
 
 ## Node
 
-```
-type Node = {
-    id: String | Number,
-    pid: String | Number,
-    leaf: Boolean,
-    depth: Number,
+```typescript
+type IdType = string | number | null | undefined;
+
+interface Node {
+	id: string | number | null | undefined;
+	pid: string | number | null | undefined;
+	leaf: boolean;
+	depth: number;
+	data: {};
 }
 ```
 
-## options
+## TreeStore Options
 
+```typescript
+interface TreeOptions {
+	rootId?: IdType;
+	simpleData?: boolean;
+	idField?: string | number;
+	pidField?: string | number;
+	childrenField?: string | number;
+	leafField?: string | number;
+	dataProcessor?: ((data: { [prop: string]: any }) => {}) | null;
+	childrenFilter?: (nodeList: Node[], id: IdType) => Node[];
+	cache?: boolean;
+}
 ```
+
+```json
 {
-     rootId: null,
-     simpleData: false,
-     idField: 'id',
-     pidField: 'pid', //simpleData=true时有效
-     childrenField: 'children', //simpleData=false时有效
-     processNode: node => node,
-     resolveChildren: results => results, //getChildren时结果处理函数
-     cache: true, // getChildren启用缓存
+	"rootId": null,
+	"simpleData": false,
+	"idField": "id",
+	"pidField": "pid", //simpleData=true时有效
+	"childrenField": "children", //simpleData=false时有效
+	"leafField": "leaf", //simpleData=false时有效
+	"dataProcessor": data => data,
+	"childrenFilter": (nodes, pid) => nodes, //getChildren时结果处理函数
+	"cache": true // getChildren启用缓存
 }
 ```
 
@@ -38,21 +56,22 @@ type Node = {
 
 `simpleData: false`
 
+```json
 {
-id:1,
-children: [
-{id:2},
-{id:3}
-]
+	"id": 1,
+	"children": [{ "id": 2 }, { "id": 3 }]
 }
+```
 
 `simpleData: true`
 
-    [
-        {id:1, pid: null},
-        {id:2, pid:1},
-        {id:3, pid:1}
-    ]
+```json
+[
+	{ "id": 1, "pid": null },
+	{ "id": 2, "pid": 1 },
+	{ "id": 3, "pid": 1 }
+]
+```
 
 ## TreeStore API
 
@@ -132,9 +151,9 @@ children: [
 
 ### 模型数据转换 API
 
-`toData()` 返回`simpleData=false`的数据结构
+`toData(processor)` 返回`simpleData=false`的数据结构
 
-`toSimpleData()` 返回`simpleData=true`的数据结构
+`toSimpleData(processor)` 返回`simpleData=true`的数据结构
 
 `toPaths()` 返回所有叶子节点的 path
 
@@ -144,67 +163,86 @@ children: [
 
 `clone()` 返回一个新的数据模型实例
 
-`clearCache` 清空缓存
+`clearCache()` 清空缓存
 
 ## createStore(data, options)
 
 作用同`new TreeStore(...)`
 
-## cloneStore(store)
+## path2data(paths: string[] | string, options:PathOptions): PathData[]
 
-复制数据模型并返回新实例
+options 默认：
 
-## path2node(paths = [], sep = '/', rootId = null)
+```json
+{
+	"sep": "/",
+	"rootId": null
+}
+```
 
 将`path`信息转换成节点列表
 
+```typescript
+interface PathOptions {
+	sep?: string;
+	rootId?: IdType;
+	processor?: (data: PathData) => PathData;
+}
+interface PathData {
+	id: string;
+	pid: IdType;
+	text: string;
+	[x: string]: any;
+}
 ```
-path2node([
-    "A/B/C",
-    "A/B/D"
-])
 
+```javascript
+path2data(["A/B/C", "A/B/D"]);
+```
+
+```json
 //output
-
 [
-    {id: 'A', pid: null, label: 'A'},
-    {id: 'A/B', pid: 'A', label: 'B'},
-    {id: 'A/B/C', pid: 'A/B', label: 'C'},
-    {id: 'A/B/D', pid: 'A/B', label: 'D'}
-]
+	{ id: "A", pid: null, text: "A" },
+	{ id: "A/B", pid: "A", text: "B" },
+	{ id: "A/B/C", pid: "A/B", text: "C" },
+	{ id: "A/B/D", pid: "A/B", text: "D" },
+];
 ```
 
-## examples
+## Usage
 
-```
-import TreeStore, { createStore, cloneStore, path2node } from 'xtree-store';
+```javascript
+import { createStore, cloneStore, path2data, TreeStore } from "xtree-store";
 
 const data = [
-    {
-        id: 1
-    },
-    {
-        id: 2,
-        children: [
-            { id: 5 },
-            {
-                id: 6, children: [
-                    { id: 8 },
-                    { id: 9 },
-                    { id: 10 },
-                ]
-            },
-            { id: 7 },
-        ]
-    },
-    {
-        id: 3
-    },
-    {
-        id: 4
-    },
+	{
+		id: 1,
+	},
+	{
+		id: 2,
+		children: [
+			{ id: 5 },
+			{
+				id: 6,
+				children: [{ id: 8 }, { id: 9 }, { id: 10 }],
+			},
+			{ id: 7 },
+		],
+	},
+	{
+		id: 3,
+	},
+	{
+		id: 4,
+	},
 ];
 
-const store = new TreeStore(data);
+// 示例1
+const store1 = new TreeStore(data);
 
+// 示例2
+const store2 = new TreeStore(store1.toSimpleData(), {
+	simpleData: true,
+});
 ```

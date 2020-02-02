@@ -1,8 +1,10 @@
 import Cache from "./Cache";
-import { isEqual, isUndefined } from "./utils";
+import { isEqual, isUndefined, undef } from "./utils";
 import { Node } from "./Node";
 
 type IdType = string | number | null | undefined;
+
+type Data = { [x: string]: any };
 
 export interface TreeOptions {
 	rootId?: IdType;
@@ -11,13 +13,19 @@ export interface TreeOptions {
 	pidField?: string | number;
 	childrenField?: string | number;
 	leafField?: string | number;
-	processNode?: ((data: {}) => {}) | null;
-	resolveChildren?: ((nodeList: Node[]) => Node[]) | null;
+	dataProcessor?: ((data: { [prop: string]: any }) => {}) | null;
+	childrenFilter?: ((nodeList: Node[], id: IdType) => Node[]) | null;
 	cache?: boolean;
 }
 
-export function createStore(data: {}[] | {}, options: TreeOptions = {}) {
+export function createStore(data: Data[] | Data, options: TreeOptions = {}) {
 	return new TreeStore(data, options);
+}
+
+let idx = 1;
+
+function getNodeId() {
+	return `node_${idx++}`;
 }
 
 export class TreeStore {
@@ -29,7 +37,7 @@ export class TreeStore {
 	protected _cache: Cache<Node> = new Cache<Node>();
 	protected __saveMode: boolean | undefined;
 
-	constructor(data: {}[] | {}, options: TreeOptions = {}) {
+	constructor(data: Data[] | Data, options: TreeOptions = {}) {
 		this.options = {
 			rootId: null,
 			simpleData: false,
@@ -37,8 +45,8 @@ export class TreeStore {
 			pidField: "pid",
 			childrenField: "children",
 			leafField: "leaf",
-			processNode: null,
-			resolveChildren: null,
+			dataProcessor: null,
+			childrenFilter: null,
 			cache: true,
 			...options,
 		};
@@ -111,8 +119,8 @@ export class TreeStore {
 		}
 	}
 
-	protected _parseData(items: Array<{}>, pid: IdType, insert = true) {
-		const { idField, childrenField, leafField, processNode, cache: useCache } = this.options;
+	protected _parseData(items: Array<Data>, pid: IdType, insert = true) {
+		const { idField, childrenField, leafField, dataProcessor, cache: useCache } = this.options;
 		const NodeList = this.__NodeList;
 		const NodeMap = this.__NodeMap;
 		const isInit = this.__init;
@@ -122,12 +130,16 @@ export class TreeStore {
 		if (!pNode) return results;
 
 		const dfs = (data: {}, pid: IdType, depth = 1) => {
-			if (processNode) {
-				data = processNode(data);
+			if (dataProcessor) {
+				data = dataProcessor(data);
 			}
 
-			const id = data[idField as string];
+			let id = data[idField as string];
 			const children = data[childrenField as string];
+
+			if (id === undefined) {
+				id = getNodeId();
+			}
 
 			let leaf = data[leafField as string];
 			if (isUndefined(leaf)) {
@@ -167,8 +179,8 @@ export class TreeStore {
 		return results;
 	}
 
-	protected _parseSimpleData(items: Array<{}>, pid: IdType, insert = true) {
-		const { idField, pidField, processNode, cache: useCache } = this.options;
+	protected _parseSimpleData(items: Array<Data>, pid: IdType, insert = true) {
+		const { idField, pidField, dataProcessor, cache: useCache } = this.options;
 		const NodeList = this.__NodeList;
 		const NodeMap = this.__NodeMap;
 		const pNode = this.isRoot(pid) ? this.getRootNode() : this.getNode(pid);
@@ -178,13 +190,16 @@ export class TreeStore {
 		if (!pNode) return results;
 
 		items.forEach(data => {
-			if (processNode) {
-				data = processNode(data);
+			if (dataProcessor) {
+				data = dataProcessor(data);
 			}
 
-			const id = data[idField as string];
-			const pid =
-				data[pidField as string] === undefined ? pNode.id : data[pidField as string];
+			let id = data[idField as string];
+			const pid = undef(data[pidField as string], pNode.id);
+
+			if (id === undefined) {
+				id = getNodeId();
+			}
 
 			const node = new Node({
 				id,
@@ -330,7 +345,7 @@ export class TreeStore {
 
 	getChildren(id: IdType = this.getRootId()) {
 		const key = this._getChildrenCacheKey(id);
-		const { cache: useCache, resolveChildren } = this.options;
+		const { cache: useCache, childrenFilter } = this.options;
 
 		if (useCache && this._cache.has(key)) {
 			return this._cache.get(key);
@@ -338,8 +353,8 @@ export class TreeStore {
 
 		let results = this.isLeaf(id) ? [] : this.__NodeList.filter(node => isEqual(node.pid, id));
 
-		if (resolveChildren) {
-			results = resolveChildren(results);
+		if (childrenFilter) {
+			results = childrenFilter(results, id);
 		}
 
 		if (useCache) {
@@ -419,7 +434,7 @@ export class TreeStore {
 	}
 
 	appendChild(
-		data: {}[] | {},
+		data: Data[] | Data,
 		pid: IdType = this.getRootId(),
 		simpleData = this.options.simpleData
 	) {
@@ -437,7 +452,7 @@ export class TreeStore {
 	}
 
 	prependChild(
-		data: {}[] | {},
+		data: Data[] | Data,
 		pid: IdType = this.getRootId(),
 		simpleData = this.options.simpleData
 	) {
@@ -463,7 +478,7 @@ export class TreeStore {
 		this._restoreMode();
 	}
 
-	insertBefore(data: {}[] | {}, id: IdType, simpleData = this.options.simpleData) {
+	insertBefore(data: Data[] | Data, id: IdType, simpleData = this.options.simpleData) {
 		if (this.isRoot(id)) return;
 
 		const index = this.getNodeIndex(id);
@@ -485,7 +500,7 @@ export class TreeStore {
 		this._restoreMode();
 	}
 
-	insertAfter(data: {}[] | {}, id: IdType, simpleData = this.options.simpleData) {
+	insertAfter(data: Data[] | Data, id: IdType, simpleData = this.options.simpleData) {
 		if (this.isRoot(id)) return;
 
 		const index = this.getNodeIndex(id);
@@ -532,7 +547,7 @@ export class TreeStore {
 		}
 	}
 
-	replaceNode(data: {}[] | {}, id: IdType, simpleData = this.options.simpleData) {
+	replaceNode(data: Data[] | Data, id: IdType, simpleData = this.options.simpleData) {
 		if (this.isRoot(id)) return;
 
 		const oldNode = this.getNode(id);
@@ -560,17 +575,24 @@ export class TreeStore {
 		this.clearCache();
 	}
 
-	toData(childField = "children") {
+	toData(processor?: (data: Data) => Data) {
+		const { idField, childrenField } = this.options;
 		const nodes = this.getChildren(this.getRootId());
 
 		const dfs = (node: Node) => {
-			const data = {
+			let data = {
 				...node.data,
 			};
 
 			if (!node.leaf) {
 				const nodes = this.getChildren(node.id);
-				data[childField] = nodes.map(dfs);
+				data[childrenField as string] = nodes.map(dfs);
+			}
+
+			data[idField as string] = node.id;
+
+			if (processor) {
+				data = processor(data);
 			}
 
 			return data;
@@ -579,8 +601,25 @@ export class TreeStore {
 		return nodes.map(dfs);
 	}
 
-	toSimpleData() {
-		return this.getNodeList().map((node: Node) => ({ ...node.data }));
+	toSimpleData(processor?: (data: Data) => Data) {
+		const { idField, pidField, childrenField, simpleData } = this.options;
+
+		return this.getNodeList().map((node: Node) => {
+			let data = { ...node.data };
+
+			data[idField as string] = node.id;
+			data[pidField as string] = node.pid;
+
+			if (!simpleData) {
+				delete data[childrenField as string];
+			}
+
+			if (processor) {
+				data = processor(data);
+			}
+
+			return data;
+		});
 	}
 
 	toPaths(field = "id", sep = "/") {
@@ -601,7 +640,7 @@ export class TreeStore {
 			simpleData: true,
 		});
 
-		tree.options = options;
+		tree.options = { ...options };
 
 		return tree;
 	}

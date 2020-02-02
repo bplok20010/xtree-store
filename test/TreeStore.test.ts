@@ -1,4 +1,4 @@
-import { createStore } from "../src";
+import { createStore, TreeStore } from "../src";
 
 const simpleData = [
 	{ t: "1", id: "a" },
@@ -35,7 +35,17 @@ test("createStore simpleData", () => {
 		simpleData: true,
 	});
 
-	expect(tree.toSimpleData()).toEqual(simpleData);
+	expect(tree.toSimpleData()).toEqual([
+		{ t: "1", id: "a", pid: null },
+		{ t: "2", id: "b", pid: "a" },
+		{ t: "3", id: "c", pid: "a" },
+		{ t: "4", id: "d", pid: "a" },
+		{ t: "5", id: "e", pid: "a" },
+		{ t: "6", id: "e1", pid: "b" },
+		{ t: "7", id: "e2", pid: "b" },
+		{ t: "8", id: "e3", pid: "c" },
+		{ t: "9", id: "e4", pid: "d" },
+	]);
 });
 
 test("createStore data", () => {
@@ -299,4 +309,118 @@ test("removeNode", () => {
 
 	expect(tree.getChildrenIds("a")).toEqual(["b", "d", "e"]);
 	expect(tree.getChildren("a").length).toEqual(3);
+});
+
+test("dataProcessor", () => {
+	const tree = createStore([{ key: "a" }, { key: "b", parentId: "a" }], {
+		simpleData: false,
+		dataProcessor(data) {
+			return {
+				...data,
+				id: data.key,
+				pid: data.parentId,
+			};
+		},
+	});
+
+	expect(tree.getAllChildren().length).toEqual(2);
+	expect(tree.getAllChildrenIds()).toEqual(["a", "b"]);
+});
+
+test("childrenFilter", () => {
+	const tree = createStore(data, {
+		simpleData: false,
+		childrenFilter(nodes, pid) {
+			if (pid === "b") {
+				return nodes.filter(node => node.data.t === "7");
+			}
+
+			return nodes;
+		},
+	});
+
+	expect(tree.getAllChildren().length).toEqual(8);
+	expect(tree.getAllChildrenIds()).toEqual(["a", "b", "e2", "c", "e3", "d", "e4", "e"]);
+});
+
+test("idField", () => {
+	const tree = createStore(data, {
+		simpleData: false,
+		idField: "t",
+	});
+
+	expect(tree.getAllChildren().length).toEqual(9);
+	expect(tree.getAllChildrenIds()).toEqual(["1", "2", "6", "7", "3", "8", "4", "9", "5"]);
+});
+
+test("idField", () => {
+	const tree = createStore(simpleData, {
+		simpleData: true,
+		idField: "t1",
+		pidField: "t2",
+	});
+
+	expect(tree.getChildren().length).toEqual(9);
+	expect(tree.getChildrenIds()).toEqual([
+		"node_1",
+		"node_2",
+		"node_3",
+		"node_4",
+		"node_5",
+		"node_6",
+		"node_7",
+		"node_8",
+		"node_9",
+	]);
+});
+
+test("toData - toSimpleData", () => {
+	const data = [
+		{
+			id: 1,
+		},
+		{
+			id: 2,
+			children: [
+				{ id: 5 },
+				{
+					id: 6,
+					children: [{ id: 8 }, { id: 9 }, { id: 10 }],
+				},
+				{ id: 7 },
+			],
+		},
+		{
+			id: 3,
+		},
+		{
+			id: 4,
+		},
+	];
+
+	const store1 = new TreeStore(data);
+
+	expect(store1.toSimpleData()).toEqual([
+		{ id: 1, pid: null },
+		{ id: 2, pid: null },
+		{ id: 5, pid: 2 },
+		{ id: 6, pid: 2 },
+		{ id: 8, pid: 6 },
+		{ id: 9, pid: 6 },
+		{ id: 10, pid: 6 },
+		{ id: 7, pid: 2 },
+		{ id: 3, pid: null },
+		{ id: 4, pid: null },
+	]);
+
+	const store2 = new TreeStore(store1.toSimpleData(), {
+		simpleData: true,
+	});
+
+	expect(
+		store2.toData(data => {
+			delete data.pid;
+			return data;
+		})
+	).toEqual(data);
 });

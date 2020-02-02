@@ -4,11 +4,9 @@ interface NodeOptions {
 	root?: boolean;
 	leaf: boolean;
 	depth: number;
-	data: {};
+	data: { [x: string]: any };
 	dirty?: boolean;
 }
-
-let id = 1;
 
 export class Node {
 	id: string | number | null | undefined;
@@ -17,9 +15,9 @@ export class Node {
 	leaf: boolean;
 	dirty: boolean;
 	depth: number;
-	data: {};
+	data: { [x: string]: any };
 	constructor(node: NodeOptions) {
-		this.id = node.id == null && !node.root ? `node_${id++}` : node.id;
+		this.id = node.id;
 		this.pid = node.pid;
 		this.root = node.root || false;
 		this.leaf = node.leaf;
