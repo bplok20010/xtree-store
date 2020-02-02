@@ -29,14 +29,22 @@ function getNodeId() {
 }
 
 export class TreeStore {
-	options: TreeOptions;
+	protected options: TreeOptions;
 	protected __NodeList: Node[];
 	protected __NodeMap: { [prop: string]: Node; [prop: number]: Node };
 	protected __root: Node;
 	protected __init: boolean = true;
 	protected _cache: Cache<Node> = new Cache<Node>();
 	protected __saveMode: boolean | undefined;
-
+	/**
+	 *Creates an instance of TreeStore.
+	 * @param {(Data[] | Data)} data
+	 * @param {TreeOptions} [options={}]
+	 * @memberof TreeStore
+	 * @example
+	 * const data = [{id: 1}, {id:2, pid: 1}];
+	 * new TreeStore(data)  or createStore(data)
+	 */
 	constructor(data: Data[] | Data, options: TreeOptions = {}) {
 		this.options = {
 			rootId: null,
