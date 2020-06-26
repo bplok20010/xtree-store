@@ -2,9 +2,9 @@ import Cache from "./Cache";
 import { isEqual, isUndefined, undef } from "./utils";
 import { Node } from "./Node";
 
-type IdType = string | number | null | undefined;
+type IdType = any;
 
-type Data = { [x: string]: any };
+type Data = Record<any, any>;
 
 export interface TreeOptions {
 	rootId?: IdType;
@@ -13,7 +13,7 @@ export interface TreeOptions {
 	pidField?: string | number;
 	childrenField?: string | number;
 	leafField?: string | number;
-	dataProcessor?: ((data: { [prop: string]: any }) => {}) | null;
+	dataProcessor?: ((data: Data) => {}) | null;
 	childrenFilter?: ((nodeList: Node[], id: IdType) => Node[]) | null;
 	cache?: boolean;
 }
@@ -31,7 +31,7 @@ function getNodeId() {
 export class TreeStore {
 	protected options: TreeOptions;
 	protected __NodeList: Node[];
-	protected __NodeMap: { [prop: string]: Node; [prop: number]: Node };
+	protected __NodeMap: Record<any, Node>;
 	protected __root: Node;
 	protected __init: boolean = true;
 	protected _cache: Cache<Node> = new Cache<Node>();
@@ -115,7 +115,7 @@ export class TreeStore {
 		return isEqual(id, this.getRootId());
 	}
 
-	setData(data: Array<{}> | {}, pid = this.options.rootId, insert = true) {
+	setData(data: Array<Data> | Data, pid = this.options.rootId, insert = true) {
 		const items = Array.isArray(data) ? data : [data];
 
 		if (!items.length) return [];

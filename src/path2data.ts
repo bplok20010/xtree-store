@@ -1,12 +1,11 @@
 import { undef } from "./utils";
 
-type IdType = string | number | null | undefined;
+type IdType = any;
 
-export interface PathData {
+export interface PathData extends Record<any, any> {
 	id: string;
 	pid: IdType;
 	text: string;
-	[x: string]: any;
 }
 export interface PathOptions {
 	sep?: string;
