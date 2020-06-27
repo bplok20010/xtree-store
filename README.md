@@ -11,11 +11,11 @@
 ## Node
 
 ```typescript
-type IdType = string | number | null | undefined;
+type IdType = any;
 
 interface Node {
-	id: string | number | null | undefined;
-	pid: string | number | null | undefined;
+	id: any;
+	pid: IdType;
 	leaf: boolean;
 	depth: number;
 	data: {};

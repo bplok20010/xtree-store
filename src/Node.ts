@@ -1,22 +1,24 @@
-interface NodeOptions {
+export type DataType = Record<any, any>;
+
+interface NodeOptions<T = DataType> {
 	id: any;
 	pid: any;
 	root?: boolean;
 	leaf: boolean;
 	depth: number;
-	data: Record<any, any>;
+	data: T;
 	dirty?: boolean;
 }
 
-export class Node {
+export class Node<T = DataType> {
 	id: any;
 	pid: any;
 	root: boolean;
 	leaf: boolean;
 	dirty: boolean;
 	depth: number;
-	data: Record<any, any>;
-	constructor(node: NodeOptions) {
+	data: T;
+	constructor(node: NodeOptions<T>) {
 		this.id = node.id;
 		this.pid = node.pid;
 		this.root = node.root || false;

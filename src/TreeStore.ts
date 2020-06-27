@@ -1,24 +1,24 @@
 import Cache from "./Cache";
 import { isEqual, isUndefined, undef } from "./utils";
-import { Node } from "./Node";
+import { Node, DataType } from "./Node";
 
 type IdType = any;
 
-type Data = Record<any, any>;
+type Data = DataType;
 
-export interface TreeOptions {
+export interface TreeOptions<T = Data> {
 	rootId?: IdType;
 	simpleData?: boolean;
 	idField?: string | number;
 	pidField?: string | number;
 	childrenField?: string | number;
 	leafField?: string | number;
-	dataProcessor?: ((data: Data) => {}) | null;
-	childrenFilter?: ((nodeList: Node[], id: IdType) => Node[]) | null;
+	dataProcessor?: ((data: T) => Data) | null;
+	childrenFilter?: ((nodeList: Node<T>[], id: IdType) => Node<T>[]) | null;
 	cache?: boolean;
 }
 
-export function createStore(data: Data[] | Data, options: TreeOptions = {}) {
+export function createStore<T = Data>(data: T[] | T, options: TreeOptions<T> = {}) {
 	return new TreeStore(data, options);
 }
 
@@ -28,13 +28,16 @@ function getNodeId() {
 	return `node_${idx++}`;
 }
 
-export class TreeStore {
-	protected options: TreeOptions;
-	protected __NodeList: Node[];
-	protected __NodeMap: Record<any, Node>;
-	protected __root: Node;
+export class TreeStore<T = Data> {
+	protected options: TreeOptions<T>;
+	protected __NodeList: Node<T>[];
+	protected __NodeMap: Record<any, Node<T>>;
+	protected __root: Node<{
+		id: any;
+		pid: any;
+	}>;
 	protected __init: boolean = true;
-	protected _cache: Cache<Node> = new Cache<Node>();
+	protected _cache: Cache<Node<T>> = new Cache<Node<T>>();
 	protected __saveMode: boolean | undefined;
 	/**
 	 *Creates an instance of TreeStore.
@@ -45,7 +48,7 @@ export class TreeStore {
 	 * const data = [{id: 1}, {id:2, pid: 1}];
 	 * new TreeStore(data)  or createStore(data)
 	 */
-	constructor(data: Data[] | Data, options: TreeOptions = {}) {
+	constructor(data: T[] | T, options: TreeOptions<T> = {}) {
 		this.options = {
 			rootId: null,
 			simpleData: false,
@@ -115,7 +118,7 @@ export class TreeStore {
 		return isEqual(id, this.getRootId());
 	}
 
-	setData(data: Array<Data> | Data, pid = this.options.rootId, insert = true) {
+	setData(data: Array<T> | T, pid = this.options.rootId, insert = true) {
 		const items = Array.isArray(data) ? data : [data];
 
 		if (!items.length) return [];
@@ -127,17 +130,17 @@ export class TreeStore {
 		}
 	}
 
-	protected _parseData(items: Array<Data>, pid: IdType, insert = true) {
+	protected _parseData(items: Array<T>, pid: IdType, insert = true) {
 		const { idField, childrenField, leafField, dataProcessor, cache: useCache } = this.options;
 		const NodeList = this.__NodeList;
 		const NodeMap = this.__NodeMap;
 		const isInit = this.__init;
 		const pNode = this.isRoot(pid) ? this.getRootNode() : this.getNode(pid);
-		const results: Node[] = [];
+		const results: Node<T>[] = [];
 		const pIds = [pid];
 		if (!pNode) return results;
 
-		const dfs = (data: {}, pid: IdType, depth = 1) => {
+		const dfs = (data: T, pid: IdType, depth = 1) => {
 			if (dataProcessor) {
 				data = dataProcessor(data);
 			}
@@ -187,13 +190,13 @@ export class TreeStore {
 		return results;
 	}
 
-	protected _parseSimpleData(items: Array<Data>, pid: IdType, insert = true) {
+	protected _parseSimpleData(items: Array<T>, pid: IdType, insert = true) {
 		const { idField, pidField, dataProcessor, cache: useCache } = this.options;
 		const NodeList = this.__NodeList;
 		const NodeMap = this.__NodeMap;
 		const pNode = this.isRoot(pid) ? this.getRootNode() : this.getNode(pid);
 		const isInit = this.__init;
-		const results: Node[] = [];
+		const results: Node<T>[] = [];
 
 		if (!pNode) return results;
 
@@ -245,7 +248,7 @@ export class TreeStore {
 			node.dirty = false;
 		}
 
-		childNodes.forEach((node: Node) => {
+		childNodes.forEach((node: Node<T>) => {
 			node.depth = pDepth + 1;
 			this._updateDepth(node.id);
 		});
@@ -264,7 +267,7 @@ export class TreeStore {
 		return this.__root;
 	}
 
-	getNode(id: IdType): Node | null {
+	getNode(id: IdType): Node<T> | null {
 		const NodeMap = this.__NodeMap;
 
 		if (this.isRoot(id)) return null;
@@ -373,14 +376,14 @@ export class TreeStore {
 	}
 
 	getChildrenIds(id?: IdType): IdType[] {
-		return this.getChildren(id).map((node: Node) => node.id);
+		return this.getChildren(id).map((node: Node<T>) => node.id);
 	}
 
 	getAllChildren(id?: IdType) {
 		const nodes = this.getChildren(id);
-		const results: Node[] = [];
+		const results: Node<T>[] = [];
 
-		nodes.forEach((node: Node) => {
+		nodes.forEach((node: Node<T>) => {
 			results.push(node);
 			results.push(...this.getAllChildren(node.id));
 		});
@@ -401,8 +404,8 @@ export class TreeStore {
 	}
 
 	getParentNodes(id?: IdType) {
-		const pNodes: Node[] = [];
-		let pNode: Node | null;
+		const pNodes: Node<T>[] = [];
+		let pNode: Node<T> | null;
 
 		while ((pNode = this.getParentNode(id))) {
 			pNodes.unshift(pNode);
@@ -442,7 +445,7 @@ export class TreeStore {
 	}
 
 	appendChild(
-		data: Data[] | Data,
+		data: T[] | T,
 		pid: IdType = this.getRootId(),
 		simpleData = this.options.simpleData
 	) {
@@ -460,7 +463,7 @@ export class TreeStore {
 	}
 
 	prependChild(
-		data: Data[] | Data,
+		data: T[] | T,
 		pid: IdType = this.getRootId(),
 		simpleData = this.options.simpleData
 	) {
@@ -486,7 +489,7 @@ export class TreeStore {
 		this._restoreMode();
 	}
 
-	insertBefore(data: Data[] | Data, id: IdType, simpleData = this.options.simpleData) {
+	insertBefore(data: T[] | T, id: IdType, simpleData = this.options.simpleData) {
 		if (this.isRoot(id)) return;
 
 		const index = this.getNodeIndex(id);
@@ -508,7 +511,7 @@ export class TreeStore {
 		this._restoreMode();
 	}
 
-	insertAfter(data: Data[] | Data, id: IdType, simpleData = this.options.simpleData) {
+	insertAfter(data: T[] | T, id: IdType, simpleData = this.options.simpleData) {
 		if (this.isRoot(id)) return;
 
 		const index = this.getNodeIndex(id);
@@ -555,7 +558,7 @@ export class TreeStore {
 		}
 	}
 
-	replaceNode(data: Data[] | Data, id: IdType, simpleData = this.options.simpleData) {
+	replaceNode(data: T[] | T, id: IdType, simpleData = this.options.simpleData) {
 		if (this.isRoot(id)) return;
 
 		const oldNode = this.getNode(id);
@@ -583,11 +586,11 @@ export class TreeStore {
 		this.clearCache();
 	}
 
-	toData(processor?: (data: Data) => Data) {
+	toData(processor?: (data: T) => Data) {
 		const { idField, childrenField } = this.options;
 		const nodes = this.getChildren(this.getRootId());
 
-		const dfs = (node: Node) => {
+		const dfs = (node: Node<T>) => {
 			let data = {
 				...node.data,
 			};
@@ -609,10 +612,10 @@ export class TreeStore {
 		return nodes.map(dfs);
 	}
 
-	toSimpleData(processor?: (data: Data) => Data) {
+	toSimpleData(processor?: (data: T) => Data) {
 		const { idField, pidField, childrenField, simpleData } = this.options;
 
-		return this.getNodeList().map((node: Node) => {
+		return this.getNodeList().map((node: Node<T>) => {
 			let data = { ...node.data };
 
 			data[idField as string] = node.id;
